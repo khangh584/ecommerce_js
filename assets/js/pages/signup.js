@@ -1,8 +1,5 @@
 // Phần 1: chọn element
 const btnSignUpSelector = document.querySelector('.btn-signup');
-const inputNameSelector = document.querySelector('.name');
-const inputEmailSelector = document.querySelector('.email');
-const inputPasswordSelector = document.querySelector('.password');
 const errorMessageAll = document.querySelectorAll('.error_message');
 
 const inputAllSelector = document.querySelectorAll('.form-group input');
@@ -12,165 +9,180 @@ const regexEmail = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
 // trong từng ô input check sẽ đính kèm các rule + qui tắc validate riêng của nó 
 
 // Phần 2: function xử lí sự kiện + chạy lần đầu khi load
+
+
+// ---------------- Start Listener Function ------------------------
  function handleSignUpClick(event){
     event.preventDefault();
+    let isNameValid;
+    let isEmailValid;
+    let isPasswordValid;
+    let isConfirmValid;
     // 1. Thực hiện validate
     let isFormValid = true;
     for (let i = 0; i < inputAllSelector.length; i++){
       let inputSelector = inputAllSelector[i];
-      let valueInput = inputSelector.value;
-      let divMessageSelector = inputSelector.closest('.form-group').querySelector('.error_message');
       let name = inputSelector.getAttribute('name');
       // validate not empty
       if (name === 'name'){
-        let isRequireValid = requireValidate(inputSelector, name);
-        // check xem nó có rỗng hay ko => có rỗng : false || ko rỗng: true
-        if (isRequireValid){
-         showSuccess(inputSelector, divMessageSelector);
-        }
+         isNameValid = validateName(inputSelector);
       } else if ( name === 'email') {
-         let isMinLengthValid;
-         let isEmailRegexValid;
-         // check xem nó có rỗng hay ko
-         let isRequireValid = requireValidate(inputSelector, name);
-         if (isRequireValid){
-             // email tối thiểu 3 kí tự
-            isMinLengthValid = minLengthValidate(inputSelector, name);
-         }
-         if (isRequireValid && isMinLengthValid){
-            // validate email 
-            isEmailRegexValid = emailRegexValidate(inputSelector, name);
-         }
-         // check validate success
-         if (isRequireValid && isMinLengthValid && isEmailRegexValid){
-            showSuccess(inputSelector, divMessageSelector);
-         }
+         isEmailValid = validateEmail(inputSelector);
       } else if ( name === 'password'){
-         let isRequireValid = requireValidate(inputSelector, name);
-         let isMinLengthValid;
-         if (isRequireValid){
-            // validate password tối thiểu 8 kí tự 
-            isMinLengthValid = minLengthValidate(inputSelector, name, 'password has at least 8 characters');
-         }
-         if (isRequireValid && isMinLengthValid){
-            showSuccess(inputSelector, divMessageSelector);
-         }
+         isPasswordValid = validatePassword(inputSelector);
       } else if (name === 'confirm_password'){ 
-         let isRequireValid = requireValidate(inputSelector, name);
-         let isMinLengthValid;
-         let isCompareValid;
-         if (isRequireValid){
-            // validate password tối thiểu 8 kí tự 
-            isMinLengthValid = minLengthValidate(inputSelector, name, 'confirm_password has at least 8 characters');
-         }
-         // validate compare to password
-         if (isRequireValid && isMinLengthValid){
-            isCompareValid = compareFieldsValidate(inputSelector, name);
-         }
-
-         if (isRequireValid && isMinLengthValid && isCompareValid){
-            showSuccess(inputSelector, divMessageSelector);
-         }
+         isConfirmValid = validateConfirmPassoword(inputSelector);
       }
     }
     //  Kiểm tra không có ô input nào lỗi validate
-    // 1. lưu user vào localStorage
-    // 2. Redirect màn hình sang login
-    for (let i = 0; i < errorMessageAll.length; i++){
-       if (errorMessageAll[i].textContent !== ''){
-         isFormValid = false;
-         break;
-       }
+    if (isNameValid && isEmailValid && isPasswordValid && isConfirmValid){
+      console.log('to login page');
     }
-    if (isFormValid){
-      console.log('redirect to login');
-    }
+    
  }
 
- // function for compare password and confirmpassword
- function compareFieldsValidate(inputSelector, name, message){
-   let isValid = true;
-   // confirm password value
-   let valueInput = inputSelector.value;
-   let compareSelectorClass = inputSelector.getAttribute("selector_compare");
-   // get the selector of password
-   let compareSelector = document.querySelector('.' + compareSelectorClass);
-   let divMessageSelector = inputSelector.closest('.form-group').querySelector('.error_message');
-   if (compareSelector.value !== valueInput){
-      isValid = false;
-      inputSelector.classList.add('error');
-      let messageError = 'Data from ' + name +' does not match with data from ' + compareSelectorClass;
-      if (message){
-         messageError = message;
-      }
-      divMessageSelector.textContent = messageError;
-   }
-   return isValid;
- }
+ // fucntion for keep track of changing value in each input field
+function handleChangeValue(event){
+   let inputSelector = event.target;
+   let nameInput = inputSelector.getAttribute('name');
+   if (nameInput === 'name'){
+      validateName(inputSelector);
+   } else if (nameInput === 'email'){
+      validateEmail(inputSelector);
+   } else if (nameInput === 'password'){
+      validatePassword(inputSelector)
+   } else if (nameInput === 'confirm_password'){
+      validateConfirmPassoword(inputSelector);
+   } 
+}
 
- // validate success
-  function showSuccess(inputSelector, divMessageSelector){
-      inputSelector.classList.remove('error');
-      divMessageSelector.textContent = '';
+
+// ---------------- End Listener Function ------------------------
+
+
+
+
+ // ---------------- Start Validate Function ------------------------
+
+ // validate for name
+function validateName(inputSelector){
+   let isValid = false;
+   if (!require(inputSelector)){
+      // show error
+      showError(inputSelector, 'Name can not empty');
+  } else {
+     // show success
+     showSuccess(inputSelector);
+     isValid = true;
   }
+  return isValid;
+}
 
-  // rule require filed validate
-  function requireValidate(inputSelector, name, message){
-   let isValid = true;
-   let valueInput = inputSelector.value;
-   let divMessageSelector = inputSelector.closest('.form-group').querySelector('.error_message');
-   if (valueInput === ''){
-      isValid = false;
-      // thêm viền đỏ cho input
-      inputSelector.classList.add('error');
-      // hiển thị message lỗi
-      let messageError = name + ' can not empty';
-      if (message){
-         messageError = message;
-      }
-      divMessageSelector.textContent = messageError;
-
+function validateEmail(inputSelector){
+   let isValid = false;
+   if (!require(inputSelector)){
+      showError(inputSelector, 'Email can not empty');
+   } else if (!minLength(inputSelector)){
+      showError(inputSelector, `Email has at least ${inputSelector.getAttribute('min_length')} characters`);
+   } else if (!emailRegex(inputSelector)){
+      showError(inputSelector, `Email does not match the format`);
+   } else {
+      showSuccess(inputSelector);
+      isValid = true;
    }
    return isValid;
-  }
+}
 
-// rule validate min-length
- function minLengthValidate(inputSelector, name, message){
-   let isValid = true;
-   let valueInput = inputSelector.value;
-   let divMessageSelector = inputSelector.closest('.form-group').querySelector('.error_message');
-   // optional
-   let minLength = inputSelector.getAttribute('min_length');
-   if (valueInput.length < minLength){
-      isValid = false;
-      inputSelector.classList.add('error');
-      let messageError = name + ' at least ' + minLength + ' characters';
-      if (message){
-         messageError = message;
-      }
-      divMessageSelector.textContent = messageError;
+function validatePassword(inputSelector){
+   let isValid = false;
+   if (!require(inputSelector)){
+      showError(inputSelector, 'Password can not empty');
+   } else if (!minLength(inputSelector)){
+      showError(inputSelector, `Password has at least ${inputSelector.getAttribute('min_length')} characters`);
+   } else {
+      showSuccess(inputSelector);
+      isValid = true;
    }
    return isValid;
- }
+}
 
- // check valid email with regex
- function emailRegexValidate(inputSelector, name, message){
-     let isValid = true;
-     let valueInput = inputSelector.value;
-     let isValidRegex = regexEmail.test(valueInput);
-     let divMessageSelector = inputSelector.closest('.form-group').querySelector('.error_message');
-     if (isValidRegex === false){
-       isValid = false;
-       inputSelector.classList.add('error');
-       let messageError = valueInput + ' not a valid email';
-       if (message){
-         messageError = message;
-       }
-       divMessageSelector.textContent = messageError;
-     }
-     return isValid;
- }
+function validateConfirmPassoword(inputSelector){
+   let isValid = false;
+   if (!require(inputSelector)){
+      showError(inputSelector, 'Confirm_password can not empty');
+   } else if (!minLength(inputSelector)){
+      showError(inputSelector, `Confirm_password has at least ${inputSelector.getAttribute('min_length')} characters`);
+   } else if (!comparePass(inputSelector)){
+      showError(inputSelector, `Confirm_password does not match with password`);
+   } else {
+      showSuccess(inputSelector);
+      isValid = true;
+   }
+   return isValid;
+}
+
+// ---------------- End Validate Function ------------------------
+
+
+
+
+// ---------------- Start Message Function ------------------------
+
+// show error 
+function showError(inputSelector, message = null){
+   inputSelector.classList.add('error');
+   let divMessageSelector = inputSelector.closest('.form-group').querySelector('.error_message');
+   divMessageSelector.textContent = message;
+}
+
+// show success
+function showSuccess(inputSelector){
+   let divMessageSelector = inputSelector.closest('.form-group').querySelector('.error_message');
+   inputSelector.classList.remove('error');
+   divMessageSelector.textContent = '';
+}
+
+// ---------------- End Message Function ------------------------
+
+
+
+
+// ---------------- Start Rules Function ------------------------
+function require(inputSelector){
+   return inputSelector.value ? true : false;
+}
+
+// check min length
+
+function minLength(inputSelector){
+    let minLength = inputSelector.getAttribute('min_length');
+    let minLengthInput = inputSelector.value;
+    return minLengthInput.length < minLength ? false : true;
+}
+
+// check email validate
+
+function emailRegex(inputSelector){
+   let emailInput = inputSelector.value;
+   return regexEmail.test(emailInput) ? true : false;
+}
+
+// check confirm_pass match with pass
+function comparePass(inputSelector){
+   let passWordValue = document.querySelector('.' + inputSelector.getAttribute('selector_compare')).value;
+   let confirmPassValue = inputSelector.value;
+   return confirmPassValue !== passWordValue ? false : true;
+}
+
+
+// ---------------- End Rules Function ------------------------
+
+
 
 // Phần 3: thêm sự kiện cho phần tử
 btnSignUpSelector.addEventListener('click', handleSignUpClick);
-
+// Thêm sự kiện input cho các ô nhập dữ liệu 
+for (let i = 0; i < inputAllSelector.length; i++){
+   let inputElement = inputAllSelector[i];
+   inputElement.addEventListener('blur', handleChangeValue);
+}
